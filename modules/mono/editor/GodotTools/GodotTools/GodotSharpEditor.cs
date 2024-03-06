@@ -1,20 +1,22 @@
 using Godot;
+using GodotTools.Build;
 using GodotTools.Core;
 using GodotTools.Export;
-using GodotTools.Utils;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using GodotTools.Build;
 using GodotTools.Ides;
 using GodotTools.Ides.Rider;
 using GodotTools.Inspector;
 using GodotTools.Internals;
 using GodotTools.ProjectEditor;
+using GodotTools.Utils;
 using JetBrains.Annotations;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+
 using static GodotTools.Internals.Globals;
+
 using Environment = System.Environment;
 using File = GodotTools.Utils.File;
 using OS = GodotTools.Utils.OS;
@@ -41,7 +43,7 @@ namespace GodotTools
         private PopupMenu _menuPopup;
 
         private AcceptDialog _errorDialog;
-        private ConfirmationDialog _confirmCreateSlnDialog;
+        private ListConfirmationDialog _confirmCreateSlnDialog;
 
         private Button _bottomPanelBtn;
         private Button _toolBarBuildButton;
@@ -162,14 +164,26 @@ namespace GodotTools
         {
             _errorDialog.Title = title;
             _errorDialog.DialogText = message;
+
             EditorInterface.Singleton.PopupDialogCentered(_errorDialog);
         }
 
-        public void ShowConfirmCreateSlnDialog()
+        private void ShowConfirmCreateSlnDialog()
         {
-            _confirmCreateSlnDialog.Title = "C# solution already exists. This will override the existing C# project file, any manual changes will be lost.".TTR();
-            _confirmCreateSlnDialog.DialogText = "Create C# solution".TTR();
-            EditorInterface.Singleton.PopupDialogCentered(_confirmCreateSlnDialog);
+            _confirmCreateSlnDialog.DialogText =
+                "C# solution already exists.\nThis will overwrite the following files. Any manual changes will be lost."
+                    .TTR();
+
+            _confirmCreateSlnDialog.SetTreeItems(new (string, Texture2D?)[]
+            {
+                (Path.GetFullPath(GodotSharpDirs.ProjectSlnPath), ListConfirmationDialog.WarningIcon),
+                (Path.GetFullPath(GodotSharpDirs.ProjectCsProjPath), ListConfirmationDialog.WarningIcon),
+            });
+
+            EditorInterface.Singleton.PopupDialogCentered(
+                _confirmCreateSlnDialog,
+                (Vector2I)(new Vector2(500, 200) * EditorInterface.Singleton.GetEditorScale())
+            );
         }
 
         private static string _vsCodePath = string.Empty;
@@ -187,13 +201,15 @@ namespace GodotTools
             switch (editorId)
             {
                 case ExternalEditorId.None:
-                    // Not an error. Tells the caller to fallback to the global external editor settings or the built-in editor.
+                    // Not an error. Tells the caller to fallback to the global external editor settings or the
+                    // built-in editor.
                     return Error.Unavailable;
                 case ExternalEditorId.CustomEditor:
                 {
                     string file = ProjectSettings.GlobalizePath(script.ResourcePath);
                     string project = ProjectSettings.GlobalizePath("res://");
-                    // Since ProjectSettings.GlobalizePath replaces only "res:/", leaving a trailing slash, it is removed here.
+                    // Since ProjectSettings.GlobalizePath replaces only "res:/", leaving a trailing slash, it is
+                    // removed here.
                     project = project[..^1];
                     var execCommand = _editorSettings.GetSetting(Settings.CustomExecPath).As<string>();
                     var execArgs = _editorSettings.GetSetting(Settings.CustomExecPathArgs).As<string>();
@@ -328,11 +344,13 @@ namespace GodotTools
                             args.Add("-b");
                             args.Add(vscodeBundleId);
 
-                            // The reusing of existing windows made by the 'open' command might not choose a wubdiw that is
-                            // editing our folder. It's better to ask for a new window and let VSCode do the window management.
+                            // The reusing of existing windows made by the 'open' command might not choose a window
+                            // that is editing our folder. It's better to ask for a new window and let VSCode do the
+                            // window management.
                             args.Add("-n");
 
-                            // The open process must wait until the application finishes (which is instant in VSCode's case)
+                            // The open process must wait until the application finishes (which is instant in
+                            // VSCode's case)
                             args.Add("--wait-apps");
 
                             args.Add("--args");
@@ -486,7 +504,7 @@ namespace GodotTools
             _errorDialog = new AcceptDialog();
             _errorDialog.SetUnparentWhenInvisible(true);
 
-            _confirmCreateSlnDialog = new ConfirmationDialog();
+            _confirmCreateSlnDialog = new ListConfirmationDialog();
             _confirmCreateSlnDialog.SetUnparentWhenInvisible(true);
             _confirmCreateSlnDialog.Confirmed += () => CreateProjectSolution();
 
