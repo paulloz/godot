@@ -86,6 +86,8 @@ public:
 	void reload_extensions();
 	bool ensure_extensions_loaded(const HashSet<String> &p_extensions);
 
+	void frame();
+
 	GDExtensionManager();
 	~GDExtensionManager();
 };

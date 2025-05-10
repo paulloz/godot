@@ -3131,6 +3131,24 @@ typedef void (*GDExtensionsInterfaceEditorHelpLoadXmlFromUtf8CharsAndLen)(const 
  */
 typedef void (*GDExtensionInterfaceEditorRegisterGetClassesUsedCallback)(GDExtensionClassLibraryPtr p_library, GDExtensionEditorGetClassesUsedCallback p_callback);
 
+/* Called for every frame iteration of the main loop. */
+typedef void (*GDExtensionMainLoopFrameCallback)();
+
+typedef struct {
+	GDExtensionMainLoopFrameCallback frame;
+} GDExtensionMainLoopCallbacks;
+
+/**
+ * @name register_main_loop_callbacks
+ * @since 4.5
+ *
+ * Registers callbacks to be called at different phases of the main loop.
+ *
+ * @param p_library A pointer the library received by the GDExtension's entry point function.
+ * @param p_callback A pointer to the structure that contains the callbacks.
+ */
+typedef void (*GDExtensionRegisterMainLoopCallbacksFunction)(GDExtensionClassLibraryPtr p_library, const GDExtensionMainLoopCallbacks *p_callbacks);
+
 #ifdef __cplusplus
 }
 #endif

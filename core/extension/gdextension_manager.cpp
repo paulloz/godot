@@ -387,6 +387,15 @@ bool GDExtensionManager::ensure_extensions_loaded(const HashSet<String> &p_exten
 	return needs_restart;
 }
 
+void GDExtensionManager::frame() {
+	for (const KeyValue<String, Ref<GDExtension>> &E : gdextension_map) {
+		const Ref<GDExtension> &extension = E.value;
+		if (extension->frame_callback) {
+			extension->frame_callback();
+		}
+	}
+}
+
 GDExtensionManager *GDExtensionManager::get_singleton() {
 	return singleton;
 }
