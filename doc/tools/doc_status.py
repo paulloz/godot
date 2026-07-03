@@ -75,6 +75,7 @@ table_columns = [
     "signals",
     "operators",
     "constructors",
+    "csharp_codeblocks",
 ]
 table_column_names = [
     "Name",
@@ -87,6 +88,7 @@ table_column_names = [
     "Signals",
     "Operators",
     "Constructors",
+    "C#",
 ]
 colors = {
     "name": [Ansi.CYAN],  # cyan
@@ -187,6 +189,7 @@ class ClassStatus:
             "signals": ClassStatusProgress(),
             "operators": ClassStatusProgress(),
             "constructors": ClassStatusProgress(),
+            "csharp_codeblocks": ClassStatusProgress(),
         }
 
     def __add__(self, other: ClassStatus):
@@ -230,7 +233,8 @@ class ClassStatus:
         )
         items_progress = ClassStatusProgress()
 
-        for k in ["methods", "constants", "members", "theme_items", "signals", "constructors", "operators"]:
+        for k in ["methods", "constants", "members", "theme_items", "signals", "constructors", "operators",
+                  "csharp_codeblocks"]:
             items_progress += self.progresses[k]
             output[k] = self.progresses[k].to_configured_colored_string()
 
@@ -254,6 +258,14 @@ class ClassStatus:
 
         return output
 
+    def __increment_csharp_codeblocks(self, description: string):
+        if description is None or len(description.strip()) <= 0:
+            return
+        n_total = description.count("[codeblock]") + description.count("[gdscript]")
+        n_missing = n_total - description.count("[csharp]")
+        for i in range(n_total):
+            self.progresses["csharp_codeblocks"].increment(i >= n_missing)
+
     @staticmethod
     def generate_for_class(c: ET.Element):
         status = ClassStatus()
@@ -267,6 +279,7 @@ class ClassStatus:
 
             elif tag.tag == "description":
                 status.has_description = len_tag_text > 0
+                status.__increment_csharp_codeblocks(tag.text)
 
             elif tag.tag in ["methods", "signals", "operators", "constructors"]:
                 for sub_tag in list(tag):
@@ -275,6 +288,7 @@ class ClassStatus:
                     descr = sub_tag.find("description")
                     has_descr = (descr is not None) and (descr.text is not None) and len(descr.text.strip()) > 0
                     status.progresses[tag.tag].increment(is_deprecated or is_experimental or has_descr)
+                    status.__increment_csharp_codeblocks(descr.text)
             elif tag.tag in ["constants", "members", "theme_items"]:
                 for sub_tag in list(tag):
                     if sub_tag.text is not None:
@@ -282,6 +296,7 @@ class ClassStatus:
                         is_experimental = "experimental" in sub_tag.attrib
                         has_descr = len(sub_tag.text.strip()) > 0
                         status.progresses[tag.tag].increment(is_deprecated or is_experimental or has_descr)
+                        status.__increment_csharp_codeblocks(sub_tag.text)
 
             elif tag.tag in ["tutorials"]:
                 pass  # Ignore those tags for now
