@@ -19,6 +19,20 @@ namespace Godot.Bridge
             }
         }
 
+        [UnmanagedCallersOnly]
+        internal static godot_bool CheckGCHandle(IntPtr gcHandlePtr)
+        {
+            try
+            {
+                return (GCHandle.FromIntPtr(gcHandlePtr).Target is not null).ToGodotBool();
+            }
+            catch (InvalidOperationException e)
+            {
+                ExceptionUtils.LogException(e);
+                return godot_bool.False;
+            }
+        }
+
         // Returns true, if releasing the provided handle is necessary for assembly unloading to succeed.
         // This check is not perfect and only intended to prevent things in GodotTools from being reloaded.
         [UnmanagedCallersOnly]

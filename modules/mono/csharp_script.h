@@ -367,6 +367,8 @@ public:
 
 	void refcount_incremented() override;
 	bool refcount_decremented() override;
+	bool refcount_needs_resurrect() const override;
+	bool refcount_can_resurrect() const override;
 
 	const Variant get_rpc_config() const override;
 

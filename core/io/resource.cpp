@@ -856,7 +856,17 @@ Ref<Resource> ResourceCache::get_ref(const String &p_path) {
 		Resource **res = resources.getptr(p_path);
 
 		if (res) {
-			ref = Ref<Resource>(*res);
+			bool should_try_ref = true;
+
+			if (ScriptInstance *script_instance = (*res)->get_script_instance()) {
+				if (script_instance->refcount_needs_resurrect() && !script_instance->refcount_can_resurrect()) {
+					should_try_ref = false;
+				}
+			}
+
+			if (should_try_ref) {
+				ref = Ref<Resource>(*res);
+			}
 		}
 
 		if (res && ref.is_null()) {

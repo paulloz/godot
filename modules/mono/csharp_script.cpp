@@ -1913,6 +1913,25 @@ bool CSharpInstance::refcount_decremented() {
 	return ref_dying;
 }
 
+bool CSharpInstance::refcount_needs_resurrect() const {
+#ifdef DEBUG_ENABLED
+	CRASH_COND(!base_ref_counted);
+	CRASH_COND(owner == nullptr);
+#endif // DEBUG_ENABLED
+
+	return gchandle.is_released() || gchandle.is_weak();
+}
+
+bool CSharpInstance::refcount_can_resurrect() const {
+#ifdef DEBUG_ENABLED
+	CRASH_COND(!base_ref_counted);
+	CRASH_COND(owner == nullptr);
+#endif // DEBUG_ENABLED
+
+	return !gchandle.is_released() && GDMonoCache::managed_callbacks.GCHandleBridge_CheckGCHandle(gchandle.get_intptr());
+}
+
+
 const Variant CSharpInstance::get_rpc_config() const {
 	return script->get_rpc_config();
 }
