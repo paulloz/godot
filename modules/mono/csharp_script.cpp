@@ -1886,7 +1886,7 @@ bool CSharpInstance::refcount_decremented() {
 	int refcount = rc_owner->get_reference_count();
 
 	if (refcount == 1 && !gchandle.is_weak()) { // The managed side also holds a reference, hence 1 instead of 0
-		// If owner owner is no longer referenced by the unmanaged side,
+		// If owner is no longer referenced by the unmanaged side,
 		// the managed instance takes responsibility of deleting the owner when GCed.
 
 		// Release the current strong handle and replace it with a weak handle.
@@ -1900,7 +1900,7 @@ bool CSharpInstance::refcount_decremented() {
 				old_gchandle, &new_gchandle, create_weak);
 
 		if (!target_alive) {
-			return refcount == 0; // Called after the managed side was collected, so nothing to do here
+			return true; // Called after the managed side was collected, so nothing to do here
 		}
 
 		gchandle = MonoGCHandleData(new_gchandle, gdmono::GCHandleType::WEAK_HANDLE);
